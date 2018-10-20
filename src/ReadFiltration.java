@@ -1,5 +1,7 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 public class ReadFiltration {
@@ -14,7 +16,7 @@ public class ReadFiltration {
         return F;
     }
 
-    HashMap<Integer, HashSet<Integer>> buildMatrix (Vector<Simplex> v, HashMap<Set<Integer>, Integer> simplToInd) {
+    static HashMap<Integer, HashSet<Integer>> buildMatrix (Vector<Simplex> v, HashMap<Set<Integer>, Integer> simplToInd,  float[] indToTime) {
         HashMap<Integer, HashSet<Integer>>  B = new HashMap<> ();
         v.sort(new Comparator<Simplex>() {
             @Override
@@ -30,6 +32,7 @@ public class ReadFiltration {
         int ind = 0;
         for (Simplex simplex : v) {
             simplToInd.put (simplex.vert, ind);
+            indToTime[ind] = simplex.val;
 
             for (int simplId : simplex.getBoundaries(simplToInd)) {
                 if (!B.containsKey(simplId)) B.put (simplId, new HashSet<> ());
@@ -41,13 +44,11 @@ public class ReadFiltration {
         return B;
     }
 
-    static HashMap<Integer, HashSet<Integer>> reduceMatrix (HashMap<Integer, HashSet<Integer>> B, int n) {
-        HashMap<Integer, HashSet<Integer>> Bt = new HashMap<> ();
+    static void reduceMatrix (HashMap<Integer, HashSet<Integer>> B, HashMap<Integer, HashSet<Integer>> Bt, HashMap<Integer, Integer> pivot, int n) {
         B.keySet().forEach (k -> B.get (k).forEach (v -> {
             if (!Bt.containsKey(v)) Bt.put (v, new HashSet<> ());
             Bt.get (v).add (k);
         }));
-        HashMap<Integer, Integer> pivot = new HashMap<> ();
 
         for (int ind = 0; ind < n; ind ++) {
             int potPivot;
@@ -65,22 +66,50 @@ public class ReadFiltration {
                         B.get (i).remove (ind);
                     }
                 }
-                potPivot = (Bt.containsKey (ind)) ? Bt.get (ind).stream().max (Integer::compareTo).get () : -1;
+                potPivot = (Bt.containsKey (ind)) ? Bt.get (ind).stream().max (Integer::compareTo).orElse (-1) : -1;
             }
             if (potPivot >= 0) {
                 pivot.put (potPivot, ind);
             }
         }
-        return B;
     }
 
 
-    public static void main(String[] args) throws FileNotFoundException {
+    public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
         if (args.length != 1) {
             System.out.println("Syntax: java ReadFiltration <filename>");
             System.exit(0);
         }
+        Vector<Simplex> filtration = readFiltration (args[0]);
+        HashMap<Set<Integer>, Integer> simplToInd = new HashMap<> ();
+        float[] indToTime = new float[filtration.size ()];
+        HashMap<Integer, HashSet<Integer>> B = buildMatrix (filtration, simplToInd, indToTime);
+        HashMap<Integer, HashSet<Integer>> Bt = new HashMap<> ();
+        HashMap<Integer, Integer> pivot = new HashMap<> ();
+        reduceMatrix (B, Bt, pivot, filtration.size ());
+        int[] indToDim = new int[filtration.size ()];
+        simplToInd.forEach((k, v) -> indToDim[v] = k.size () - 1);
+        PrintWriter writer = new PrintWriter("Resource/out.txt", "UTF-8");
 
-        System.out.println(readFiltration(args[0]));
+        buildBarcode (pivot, filtration.size (), indToDim, indToTime, writer);
+    }
+
+    private static void buildBarcode(HashMap<Integer, Integer> pivot, int n, int[] indToDim, float[] indToTime, PrintWriter writer) {
+        HashMap<Integer, Integer> revPivot = new HashMap<> ();
+        pivot.forEach ((i, j) -> revPivot.put (j, i));
+
+        for (int j = 0; j < n; j++) {
+            if (revPivot.containsKey (j)) {
+                int i = revPivot.get (j);
+                writer.print (indToDim[i]);
+                writer.println (" " + indToTime[i] + " " + indToTime[j]);
+                continue;
+            }
+            if (!pivot.containsKey (j)) {
+                writer.print (indToDim[j]);
+                writer.println (" " + indToTime[j] + " inf");
+            }
+        }
+        writer.close();
     }
 }

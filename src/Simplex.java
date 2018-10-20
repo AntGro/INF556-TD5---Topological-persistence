@@ -22,7 +22,7 @@ class Simplex {
         ArrayList<Integer> boundInd = new ArrayList<> ();
         for (Integer vertId : vert) {
             simp.remove(vertId);
-            boundInd.add (simplToInd.get (simp));
+            if (!simp.isEmpty()) boundInd.add (simplToInd.get (simp));
             simp.add (vertId);
         }
         return boundInd;
