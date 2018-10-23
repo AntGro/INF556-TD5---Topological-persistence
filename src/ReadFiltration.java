@@ -74,6 +74,24 @@ public class ReadFiltration {
         }
     }
 
+    private static void buildBarcode(HashMap<Integer, Integer> pivot, int n, int[] indToDim, float[] indToTime, PrintWriter writer) {
+        HashMap<Integer, Integer> revPivot = new HashMap<> ();
+        pivot.forEach ((i, j) -> revPivot.put (j, i));
+
+        for (int j = 0; j < n; j++) {
+            if (revPivot.containsKey (j)) {
+                int i = revPivot.get (j);
+                writer.print (indToDim[i]);
+                writer.println (" " + indToTime[i] + " " + indToTime[j]);
+                continue;
+            }
+            if (!pivot.containsKey (j)) {
+                writer.print (indToDim[j]);
+                writer.println (" " + indToTime[j] + " inf");
+            }
+        }
+        writer.close();
+    }
 
     public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
         if (args.length != 1) {
@@ -94,22 +112,8 @@ public class ReadFiltration {
         buildBarcode (pivot, filtration.size (), indToDim, indToTime, writer);
     }
 
-    private static void buildBarcode(HashMap<Integer, Integer> pivot, int n, int[] indToDim, float[] indToTime, PrintWriter writer) {
-        HashMap<Integer, Integer> revPivot = new HashMap<> ();
-        pivot.forEach ((i, j) -> revPivot.put (j, i));
 
-        for (int j = 0; j < n; j++) {
-            if (revPivot.containsKey (j)) {
-                int i = revPivot.get (j);
-                writer.print (indToDim[i]);
-                writer.println (" " + indToTime[i] + " " + indToTime[j]);
-                continue;
-            }
-            if (!pivot.containsKey (j)) {
-                writer.print (indToDim[j]);
-                writer.println (" " + indToTime[j] + " inf");
-            }
-        }
-        writer.close();
-    }
+
+
+
 }
