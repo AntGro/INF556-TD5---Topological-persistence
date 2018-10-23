@@ -25,7 +25,7 @@ public class ReadFiltration {
                 if (s1.val < s2.val) return -1;
                 if (s1.dim > s2.dim) return 1;
                 if (s1.dim < s2.dim) return -1;
-                return (s1.vert.equals(s2.vert)? 0 : 1);
+                return 0;
             }
         });
 
@@ -93,6 +93,8 @@ public class ReadFiltration {
         writer.close();
     }
 
+
+
     public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
         if (args.length != 1) {
             System.out.println("Syntax: java ReadFiltration <filename>");
@@ -111,9 +113,6 @@ public class ReadFiltration {
 
         buildBarcode (pivot, filtration.size (), indToDim, indToTime, writer);
     }
-
-
-
 
 
 }
