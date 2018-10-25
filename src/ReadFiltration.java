@@ -140,7 +140,7 @@ public class ReadFiltration {
         reduceMatrix (B, pivot, filtration.size ());
         int[] indToDim = new int[filtration.size ()];   //intToDim[i] stores the dimension of simplex denoted by i in simplToInd
         simplToInd.forEach((k, v) -> indToDim[v] = k.size () - 1);
-        PrintWriter writer = new PrintWriter("Resource\\" + "barcode_" + args[0].substring(args[0].lastIndexOf("\\") + 1), "UTF-8");
+        PrintWriter writer = new PrintWriter("Resource/" + "barcode_" + args[0].substring(args[0].lastIndexOf("/") + 1), "UTF-8");
 
         buildBarcode (pivot, filtration.size (), indToDim, indToTime, writer);
 
