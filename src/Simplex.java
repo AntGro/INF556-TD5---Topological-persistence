@@ -5,6 +5,12 @@ class Simplex {
     int dim;
     TreeSet<Integer> vert;
 
+    public Simplex(float value, int dimension, TreeSet<Integer> vertices){
+        val = value;
+        dim = dimension;
+        vert = vertices;
+    }
+
     Simplex(Scanner sc){
         val = sc.nextFloat();
         dim = sc.nextInt();
@@ -12,6 +18,7 @@ class Simplex {
         for (int i=0; i<=dim; i++)
             vert.add(sc.nextInt());
     }
+
 
     public String toString(){
         return "{val="+val+"; dim="+dim+"; "+vert+"}\n";
@@ -26,5 +33,11 @@ class Simplex {
             simp.add (vertId);
         }
         return boundInd;
+    }
+
+    public Simplex incr(int d){
+        TreeSet<Integer> vertices = (TreeSet)vert.clone();
+        vertices.add(d);
+        return new Simplex(val +1, dim +1, vertices);
     }
 }

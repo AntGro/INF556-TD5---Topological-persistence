@@ -94,12 +94,48 @@ public class ReadFiltration {
     }
 
 
+    public static Vector<Simplex>[] dSB(int maxDimension, int type){
+        Vector[] res = new Vector[maxDimension+1];
+        res[0] = new Vector<Simplex>();
+        res[0].add(new Simplex(0,0, new TreeSet<Integer>(){{add(0);}}));
+        res[1] = new Vector<Simplex>();
+        if (type == 0){
+            res[1].add(new Simplex(0,0, new TreeSet<Integer>(){{add(0);}}));
+            res[1].add(new Simplex(0,0, new TreeSet<Integer>(){{add(1);}}));
+        }
+        else {
+            res[1].add(new Simplex(0,0, new TreeSet<Integer>(){{add(0);}}));
+            res[1].add(new Simplex(0,0, new TreeSet<Integer>(){{add(1);}}));
+            res[1].add(new Simplex(1,1, new TreeSet<Integer>(){{add(0); add(1);}}));
+        }
+        for (int d = 2; d<=maxDimension; d++){
+            res[d] = new Vector<Simplex>();
+            res[d] = (Vector<Simplex>)res[d-1].clone();
+            int finalD = d;
+            res[d].add(new Simplex(0,0, new TreeSet<Integer>(){{add(finalD);}}));
+            if (type == 0){
+                res[d].add(new Simplex(finalD-1,finalD-1, new TreeSet<Integer>(){{
+                    for (int j = 0; j<=finalD-1; j++){
+                        add(j);
+                    }
+                }}));
+            }
+            Iterator it = res[d-1].iterator();
+            while (it.hasNext()) {
+                Simplex curr = (Simplex)it.next();
+                res[d].add((curr.incr(finalD)));
+            }
+        }
+        return res;
+
+    }
 
     public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
         if (args.length != 1) {
             System.out.println("Syntax: java ReadFiltration <filename>");
             System.exit(0);
         }
+
         Vector<Simplex> filtration = readFiltration (args[0]);
         HashMap<Set<Integer>, Integer> simplToInd = new HashMap<> ();
         float[] indToTime = new float[filtration.size ()];
@@ -114,5 +150,5 @@ public class ReadFiltration {
         buildBarcode (pivot, filtration.size (), indToDim, indToTime, writer);
     }
 
-
+    
 }
