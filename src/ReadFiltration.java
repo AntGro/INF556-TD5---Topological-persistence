@@ -29,63 +29,58 @@ public class ReadFiltration {
             }
         });
 
-        int ind = 0;
+        //Fill simplToInd, indToTime and build B
+        int ind = 0; //used to number simplices
         for (Simplex simplex : v) {
             simplToInd.put (simplex.vert, ind);
             indToTime[ind] = simplex.val;
 
-            for (int simplId : simplex.getBoundaries(simplToInd)) {
-                if (!B.containsKey(simplId)) B.put (simplId, new HashSet<> ());
-                B.get (simplId).add (ind);
+            // put non-zero element of column ind indices if they exist (if simplex has a non trivial boundary)
+            if (simplex.dim > 0) {
+                B.put (ind, new HashSet<> (simplex.getBoundaries(simplToInd)));
             }
-
             ind++;
         }
         return B;
     }
 
-    static void reduceMatrix (HashMap<Integer, HashSet<Integer>> B, HashMap<Integer, HashSet<Integer>> Bt, HashMap<Integer, Integer> pivot, int n) {
-        B.keySet().forEach (k -> B.get (k).forEach (v -> {
-            if (!Bt.containsKey(v)) Bt.put (v, new HashSet<> ());
-            Bt.get (v).add (k);
-        }));
+    static void reduceMatrix (HashMap<Integer, HashSet<Integer>> B, HashMap<Integer, Integer> pivot, int n) { // O(n**3) where n is the number of simplices in the filtration
 
-        for (int ind = 0; ind < n; ind ++) {
+        for (int ind = 0; ind < n; ind ++) { //-> n loops
             int potPivot;
-            potPivot = (Bt.containsKey (ind)) ? Bt.get (ind).stream().max (Integer::compareTo).get () : -1;
-            while (potPivot > -1 && pivot.containsKey (potPivot)) {
+            potPivot = (B.containsKey (ind)) ? B.get (ind).stream().max (Integer::compareTo).get () : -1; // potential pivot of column ind
+            while (potPivot > -1 && pivot.containsKey (potPivot)) { // this loop is executed at most m times since potPivot decreases by at least one each time -> O(n)
                 int j = pivot.get (potPivot);
-                for (int i : Bt.get (j)) {
-                    if (Bt.get (ind).contains (i)) {
-                        Bt.get (ind).remove(i);
-                        B.get (i).remove (ind);
+                for (int i : B.get (j)) {
+                    if (B.get (ind).contains (i)) {
+                        B.get (ind).remove(i);
                     }
                     else {
-                        Bt.get (ind).add(i);
-                        if (!B.containsKey (i)) B.put (i, new HashSet<> ());
-                        B.get (i).remove (ind);
+                        B.get (ind).add(i);
                     }
                 }
-                potPivot = (Bt.containsKey (ind)) ? Bt.get (ind).stream().max (Integer::compareTo).orElse (-1) : -1;
+                potPivot = (B.containsKey (ind)) ? B.get (ind).stream().max (Integer::compareTo).orElse (-1) : -1; // compute max -> O(n)
             }
-            if (potPivot >= 0) {
+            if (potPivot >= 0) { //if potpivot is actually a valid pivot -> update pivot table
                 pivot.put (potPivot, ind);
+            } else { //column ind of B is empty
+                B.remove (ind);
             }
         }
     }
 
     private static void buildBarcode(HashMap<Integer, Integer> pivot, int n, int[] indToDim, float[] indToTime, PrintWriter writer) {
-        HashMap<Integer, Integer> revPivot = new HashMap<> ();
+        HashMap<Integer, Integer> revPivot = new HashMap<> (); //revPivot.get (j) = i <=> there is a pivot in column j in line i
         pivot.forEach ((i, j) -> revPivot.put (j, i));
 
         for (int j = 0; j < n; j++) {
-            if (revPivot.containsKey (j)) {
+            if (revPivot.containsKey (j)) { // there is a pivot in column j -> there is a new bar
                 int i = revPivot.get (j);
                 writer.print (indToDim[i]);
                 writer.println (" " + indToTime[i] + " " + indToTime[j]);
                 continue;
             }
-            if (!pivot.containsKey (j)) {
+            if (!pivot.containsKey (j)) { // we only add a bar if there is no pivot in line j
                 writer.print (indToDim[j]);
                 writer.println (" " + indToTime[j] + " inf");
             }
@@ -135,19 +130,21 @@ public class ReadFiltration {
             System.out.println("Syntax: java ReadFiltration <filename>");
             System.exit(0);
         }
-
+        long t = System.nanoTime ();    //To measure time execution
         Vector<Simplex> filtration = readFiltration (args[0]);
-        HashMap<Set<Integer>, Integer> simplToInd = new HashMap<> ();
-        float[] indToTime = new float[filtration.size ()];
-        HashMap<Integer, HashSet<Integer>> B = buildMatrix (filtration, simplToInd, indToTime);
-        HashMap<Integer, HashSet<Integer>> Bt = new HashMap<> ();
-        HashMap<Integer, Integer> pivot = new HashMap<> ();
-        reduceMatrix (B, Bt, pivot, filtration.size ());
-        int[] indToDim = new int[filtration.size ()];
+        System.out.println (filtration.size ());
+        HashMap<Set<Integer>, Integer> simplToInd = new HashMap<> ();   //This HashMap will be filled during the building of the matrix B -> it matches simplices with their corresponding row/column index in B
+        float[] indToTime = new float[filtration.size ()];  // indToTime[i] stores the birth time of simplex denoted by i in simplToInd
+        HashMap<Integer, HashSet<Integer>> B = buildMatrix (filtration, simplToInd, indToTime); //keys are column indices
+        HashMap<Integer, Integer> pivot = new HashMap<> (); //pivot will be filled during the reducing of the matrix B, its keys correspond to the indices matching the simplices
+        reduceMatrix (B, pivot, filtration.size ());
+        int[] indToDim = new int[filtration.size ()];   //intToDim[i] stores the dimension of simplex denoted by i in simplToInd
         simplToInd.forEach((k, v) -> indToDim[v] = k.size () - 1);
-        PrintWriter writer = new PrintWriter("Resource/out.txt", "UTF-8");
+        PrintWriter writer = new PrintWriter("Resource\\" + "barcode_" + args[0].substring(args[0].lastIndexOf("\\") + 1), "UTF-8");
 
         buildBarcode (pivot, filtration.size (), indToDim, indToTime, writer);
+
+        System.out.println ((System.nanoTime() - t) / 1000000000);
     }
 
     

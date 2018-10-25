@@ -24,7 +24,7 @@ class Simplex {
         return "{val="+val+"; dim="+dim+"; "+vert+"}\n";
     }
 
-    public Collection<Integer> getBoundaries(HashMap<Set<Integer>, Integer> simplToInd) {
+    public Collection<Integer> getBoundaries(HashMap<Set<Integer>, Integer> simplToInd) { //given a simplex (this) and a map matching simplices to indices, return the indices of the element of the simplex boudary
         Collection<Integer> simp = new HashSet<> (vert);
         ArrayList<Integer> boundInd = new ArrayList<> ();
         for (Integer vertId : vert) {
