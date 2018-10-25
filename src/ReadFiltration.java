@@ -146,6 +146,5 @@ public class ReadFiltration {
 
         System.out.println ((System.nanoTime() - t) / 1000000000);
     }
-
     
 }
