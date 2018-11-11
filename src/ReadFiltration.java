@@ -103,7 +103,7 @@ public class ReadFiltration {
             res[1].add(new Simplex(0,0, new TreeSet<Integer>(){{add(1);}}));
             res[1].add(new Simplex(1,1, new TreeSet<Integer>(){{add(0); add(1);}}));
         }
-        for (int d = 2; d<=maxDimension; d++){
+        for (int d = 2; d <= maxDimension; d++){
             res[d] = new Vector<Simplex>();
             res[d] = (Vector<Simplex>)res[d-1].clone();
             int finalD = d;
@@ -130,21 +130,24 @@ public class ReadFiltration {
             System.out.println("Syntax: java ReadFiltration <filename>");
             System.exit(0);
         }
-        long t = System.nanoTime ();    //To measure time execution
-        Vector<Simplex> filtration = readFiltration (args[0]);
-        System.out.println (filtration.size ());
-        HashMap<Set<Integer>, Integer> simplToInd = new HashMap<> ();   //This HashMap will be filled during the building of the matrix B -> it matches simplices with their corresponding row/column index in B
-        float[] indToTime = new float[filtration.size ()];  // indToTime[i] stores the birth time of simplex denoted by i in simplToInd
-        HashMap<Integer, HashSet<Integer>> B = buildMatrix (filtration, simplToInd, indToTime); //keys are column indices
-        HashMap<Integer, Integer> pivot = new HashMap<> (); //pivot will be filled during the reducing of the matrix B, its keys correspond to the indices matching the simplices
-        reduceMatrix (B, pivot, filtration.size ());
-        int[] indToDim = new int[filtration.size ()];   //intToDim[i] stores the dimension of simplex denoted by i in simplToInd
-        simplToInd.forEach((k, v) -> indToDim[v] = k.size () - 1);
-        PrintWriter writer = new PrintWriter("Resource/" + "barcode_" + args[0].substring(args[0].lastIndexOf("/") + 1), "UTF-8");
+        for (int i = 0; i < 18; i++) {
+            long t = System.nanoTime ();    //To measure time execution
+            Vector<Simplex> filtration = dSB (18, 1)[i];
+            System.out.println (filtration.size ());
+            HashMap<Set<Integer>, Integer> simplToInd = new HashMap<> ();   //This HashMap will be filled during the building of the matrix B -> it matches simplices with their corresponding row/column index in B
+            float[] indToTime = new float[filtration.size ()];  // indToTime[i] stores the birth time of simplex denoted by i in simplToInd
+            HashMap<Integer, HashSet<Integer>> B = buildMatrix (filtration, simplToInd, indToTime); //keys are column indices
+            HashMap<Integer, Integer> pivot = new HashMap<> (); //pivot will be filled during the reducing of the matrix B, its keys correspond to the indices matching the simplices
+            reduceMatrix (B, pivot, filtration.size ());
+            int[] indToDim = new int[filtration.size ()];   //intToDim[i] stores the dimension of simplex denoted by i in simplToInd
+            simplToInd.forEach((k, v) -> indToDim[v] = k.size () - 1);
+            PrintWriter writer = new PrintWriter("Resource/" + "barcode_" + "boule" + i +".txt", "UTF-8");
 
-        buildBarcode (pivot, filtration.size (), indToDim, indToTime, writer);
+            buildBarcode (pivot, filtration.size (), indToDim, indToTime, writer);
 
-        System.out.println ((System.nanoTime() - t) / 1000000000);
+            System.out.println ((System.nanoTime() - t) / 1000000000);
+        }
+
     }
     
 }
